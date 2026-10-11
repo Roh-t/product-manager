@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Zepto Product Manager</title>
+  <style>
+    :root { --green: #4d7c0f; --green-dark: #365314; --ink: #172015; --muted: #667085; --line: #e5e7eb; --page: #f7f8f5; }
+    * { box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--page); color: var(--ink); margin: 0; }
+    .container { max-width: 1120px; margin: auto; padding: 24px 20px 48px; }
+    .topbar { background: white; border-bottom: 1px solid var(--line); }
+    .topbar-inner { max-width: 1120px; margin: auto; padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+    .brand { display: flex; align-items: center; gap: 10px; font-size: 20px; font-weight: 800; color: var(--green-dark); }
+    .brand-mark { width: 36px; height: 36px; display: grid; place-items: center; border-radius: 11px; background: #d9f99d; font-size: 20px; }
+    .topbar-note { color: var(--muted); font-size: 13px; }
+    .hero { margin: 12px 0 24px; }
+    .hero h1 { margin: 0 0 6px; font-size: clamp(25px, 5vw, 34px); letter-spacing: -0.7px; }
+    .hero p { margin: 0; color: var(--muted); }
+    .card-box { background: #ffffff; padding: clamp(18px, 4vw, 30px); border: 1px solid var(--line); border-radius: 18px; box-shadow: 0 10px 30px rgba(32, 42, 24, 0.07); }
+    h2 { margin-top: 0; color: var(--ink); }
+    .section-title { margin: 0 0 20px; font-size: 21px; }
+    .input-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .form-group { margin-bottom: 16px; }
+    label { display: block; font-size: 13px; font-weight: 700; margin-bottom: 7px; color: #344054; }
+    input, select { width: 100%; min-height: 46px; padding: 11px 13px; border: 1px solid #d0d5dd; border-radius: 10px; box-sizing: border-box; background: white; color: var(--ink); font-size: 15px; }
+    input:focus, select:focus { outline: 3px solid #d9f99d; border-color: var(--green); }
+    button { background-color: var(--green); color: white; border: none; font-size: 15px; font-weight: 700; padding: 13px 18px; border-radius: 10px; cursor: pointer; width: 100%; margin-top: 10px; transition: transform .15s, background .15s; }
+    button:hover { background: var(--green-dark); }
+    button:active { transform: scale(.98); }
+    button:disabled { background-color: #9ca3af; cursor: not-allowed; }
+    .helper { color: var(--muted); font-size: 12px; margin: -8px 0 16px; }
+    .dashboard-head { display: flex; align-items: end; justify-content: space-between; gap: 16px; margin-top: 38px; }
+    .dashboard-head h2 { margin-bottom: 4px; }
+    .dashboard-head p { margin: 0; color: var(--muted); font-size: 14px; }
+    .export-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 0; }
+    .export-actions a { background-color: #eef2ff; color: #3730a3; padding: 9px 12px; border-radius: 9px; text-decoration: none; font-size: 13px; font-weight: 700; }
+    .export-actions a:last-child { background-color: #ecfdf3; color: #047857; }
+    .category-nav { display: flex; flex-wrap: wrap; gap: 8px; margin: 20px 0 14px; padding-bottom: 4px; }
+    .category-chip { width: auto; margin: 0; padding: 9px 14px; background: white; border: 1px solid var(--line); color: #475467; font-size: 13px; }
+    .category-chip.active { background: #4d7c0f; color: white; }
+    .category-heading { margin: 22px 0 0; color: #111827; font-size: 20px; }
+    
+    /* Live Product Grid */
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 16px; margin-top: 14px; }
+    .product-card { background: white; border: 1px solid var(--line); border-radius: 15px; padding: 13px; box-shadow: 0 5px 16px rgba(32, 42, 24, 0.06); text-align: left; overflow: hidden; }
+    .product-card img { width: 100%; height: 170px; object-fit: contain; border-radius: 10px; background: #fafafa; }
+    .product-title { font-size: 15px; font-weight: 750; margin: 10px 2px 4px; line-height: 1.3; }
+    .product-sub { color: #6b7280; font-size: 13px; margin: 0; }
+    .product-price { font-size: 16px; font-weight: 700; color: #047857; margin-top: 6px; }
+    .product-actions { display: flex; gap: 8px; margin-top: 12px; }
+    .product-actions button { width: auto; flex: 1; margin: 0; padding: 8px; font-size: 13px; }
+    .edit-button { background: #2563eb; }
+    .delete-button { background: #dc2626; }
+    .image-button { display: block; width: 100%; padding: 0; border: 0; background: transparent; cursor: zoom-in; }
+    .modal { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; padding: 20px; background: rgba(0, 0, 0, 0.65); z-index: 10; }
+    .modal.open { display: flex; }
+    .modal-content { position: relative; width: min(520px, 100%); max-height: 90vh; overflow-y: auto; background: white; border-radius: 16px; padding: 24px; box-sizing: border-box; }
+    .modal-content h2 { margin-top: 0; }
+    .modal-close { position: absolute; top: 8px; right: 12px; width: auto; margin: 0; padding: 2px 8px; background: transparent; color: #374151; font-size: 24px; }
+    .modal-image { max-width: 90vw; max-height: 82vh; object-fit: contain; border-radius: 8px; }
+    .image-modal-content { width: auto; max-width: 95vw; padding: 12px; background: transparent; }
+    @media (max-width: 640px) {
+      .container { padding: 16px 12px 34px; }
+      .topbar-inner { padding: 13px 12px; }
+      .topbar-note { display: none; }
+      .hero { margin: 8px 0 18px; }
+      .input-row { grid-template-columns: 1fr; gap: 0; }
+      .dashboard-head { align-items: flex-start; flex-direction: column; margin-top: 30px; }
+      .export-actions { width: 100%; }
+      .export-actions a { flex: 1; text-align: center; }
+      .category-nav { flex-wrap: nowrap; overflow-x: auto; margin-right: -12px; padding-right: 12px; }
+      .category-chip { flex: 0 0 auto; }
+      .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+      .product-card { padding: 9px; border-radius: 12px; }
+      .product-card img { height: 125px; }
+      .product-title { font-size: 13px; }
+      .product-sub { font-size: 11px; }
+      .product-price { font-size: 14px; }
+      .product-actions { gap: 5px; }
+      .product-actions button { padding: 8px 4px; font-size: 11px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <div class="hero">
+    <h1>Product Manager</h1>
+    <p>Add, organize, and manage your store items in one place.</p>
+  </div>
+  <div class="card-box">
+    <h2 class="section-title">Add a new product</h2>
+    <p class="helper">Fill in the details below. Your category will be created automatically if it does not exist.</p>
+    <form id="productForm">
+      <div class="input-row">
+        <div class="form-group">
+          <label>Product Name</label>
+          <input type="text" name="name" placeholder="e.g. Amul Taaza Milk" required />
+        </div>
+        <div class="form-group">
+          <label>Brand</label>
+          <input type="text" name="brand" placeholder="e.g. Amul" required />
+        </div>
+      </div>
+
+      <div class="input-row">
+        <div class="form-group">
+          <label>Pack Size</label>
+          <input type="text" name="pack_size" placeholder="e.g. 500 ml" required />
+        </div>
+        <div class="form-group">
+          <label>Price (₹)</label>
+          <input type="number" step="0.01" name="price" placeholder="e.g. 27" required />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="categorySelect">Category</label>
+        <select id="categorySelect" name="category_name" required>
+          <option value="">Loading categories...</option>
+          <option value="__new__">Create a new category</option>
+        </select>
+        <input type="text" id="newCategory" placeholder="Enter a new category name" style="display: none; margin-top: 8px;" />
+      </div>
+
+      <div class="form-group">
+        <label>Upload Image</label>
+        <input type="file" name="image" accept="image/*" required />
+      </div>
+
+      <button type="submit" id="submitBtn">Save product</button>
+    </form>
+  </div>
+
+  <div class="dashboard-head">
+    <div>
+      <h2>My products</h2>
+      <p>Browse your items by category or manage them individually.</p>
+    </div>
+  <div class="export-actions">
+    <a href="/api/products/export?format=json" download="products.json">Download JSON</a>
+    <a href="/api/products/export?format=csv" download="products.csv">Download Excel CSV</a>
+  </div>
+  </div>
+  <div id="categoryNav" class="category-nav"></div>
+  <h2 id="categoryHeading" class="category-heading">All Items</h2>
+  <div id="productGrid" class="grid"></div>
+</div>
+
+<div id="editModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="editModalTitle">
+  <div class="modal-content">
+    <button type="button" class="modal-close" data-close-modal="editModal" aria-label="Close">&times;</button>
+    <h2 id="editModalTitle">Edit Product</h2>
+    <form id="editForm">
+      <input type="hidden" id="editId" />
+      <div class="form-group"><label for="editName">Product Name</label><input id="editName" required /></div>
+      <div class="form-group"><label for="editBrand">Brand</label><input id="editBrand" required /></div>
+      <div class="input-row">
+        <div class="form-group"><label for="editPackSize">Pack Size</label><input id="editPackSize" required /></div>
+        <div class="form-group"><label for="editPrice">Price (₹)</label><input id="editPrice" type="number" step="0.01" required /></div>
+      </div>
+      <div class="form-group">
+        <label for="editCategory">Category</label>
+        <select id="editCategory" required></select>
+      </div>
+      <div class="form-group"><label for="editImage">Replace Image (optional)</label><input id="editImage" type="file" accept="image/*" /></div>
+      <button type="submit" id="editSubmit">Save Changes</button>
+    </form>
+  </div>
+</div>
+
+<div id="imageModal" class="modal" role="dialog" aria-modal="true">
+  <div class="image-modal-content">
+    <button type="button" class="modal-close" data-close-modal="imageModal" aria-label="Close">&times;</button>
+    <img id="zoomedImage" class="modal-image" alt="Product preview" />
+  </div>
+</div>
+
+<script>
+  const form = document.getElementById('productForm');
+  const submitBtn = document.getElementById('submitBtn');
+  const productGrid = document.getElementById('productGrid');
+  const categorySelect = document.getElementById('categorySelect');
+  const newCategory = document.getElementById('newCategory');
+  const categoryNav = document.getElementById('categoryNav');
+  const categoryHeading = document.getElementById('categoryHeading');
+  const editModal = document.getElementById('editModal');
+  const editForm = document.getElementById('editForm');
+  const editCategory = document.getElementById('editCategory');
+  const imageModal = document.getElementById('imageModal');
+  const zoomedImage = document.getElementById('zoomedImage');
+  let allProducts = [];
+  let selectedCategory = '';
+
+  async function loadCategories() {
+    const res = await fetch('/api/categories');
+    if (!res.ok) throw new Error('Could not load categories');
+    const categories = await res.json();
+    categorySelect.innerHTML = '<option value="">Choose a category</option>';
+    categories.forEach(category => {
+      categorySelect.innerHTML += `<option value="${category.name}">${category.name}</option>`;
+    });
+    categorySelect.innerHTML += '<option value="__new__">Create a new category</option>';
+    editCategory.innerHTML = '<option value="">Choose a category</option>';
+    categories.forEach(category => {
+      editCategory.innerHTML += `<option value="${category.name}">${category.name}</option>`;
+    });
+    renderCategoryNav(categories.map(category => category.name));
+  }
+
+  function renderCategoryNav(categoryNames) {
+    categoryNav.innerHTML = '';
+    const names = [''].concat(categoryNames);
+    names.forEach(categoryName => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = `category-chip${selectedCategory === categoryName ? ' active' : ''}`;
+      button.textContent = categoryName || 'All Items';
+      button.addEventListener('click', () => {
+        selectedCategory = categoryName;
+        renderCategoryNav(categoryNames);
+        renderProducts();
+      });
+      categoryNav.appendChild(button);
+    });
+  }
+
+  categorySelect.addEventListener('change', () => {
+    const creatingCategory = categorySelect.value === '__new__';
+    newCategory.style.display = creatingCategory ? 'block' : 'none';
+    newCategory.required = creatingCategory;
+    if (!creatingCategory) newCategory.value = '';
+  });
+
+  // Load items from database on page load
+  async function loadProducts() {
+    try {
+      const res = await fetch('/api/products');
+      const products = await res.json();
+      allProducts = products;
+      renderProducts();
+    } catch (e) {
+      console.error('Could not load products', e);
+    }
+  }
+
+  function renderProducts() {
+    const products = selectedCategory
+      ? allProducts.filter(product => product.category_name === selectedCategory)
+      : allProducts;
+    categoryHeading.textContent = selectedCategory
+      ? `${selectedCategory} (${products.length})`
+      : `All Items (${products.length})`;
+    productGrid.innerHTML = '';
+
+    if (!products.length) {
+      productGrid.innerHTML = '<p>No items found in this category.</p>';
+      return;
+    }
+
+    products.forEach(p => {
+      productGrid.innerHTML += `
+          <div class="product-card">
+            <button type="button" class="image-button" data-image="${p.image_url}" data-name="${p.name}">
+              <img src="${p.image_url}" alt="${p.name}" />
+            </button>
+            <div class="product-title">${p.name}</div>
+            <p class="product-sub">${p.brand} • ${p.pack_size}</p>
+            ${p.category_name ? `<p class="product-sub">Category: ${p.category_name}</p>` : ''}
+            <div class="product-price">₹${p.price}</div>
+            <div class="product-actions">
+              <button type="button" class="edit-button" data-product-id="${p.id}">Edit</button>
+              <button type="button" class="delete-button" data-product-id="${p.id}">Delete</button>
+            </div>
+          </div>
+        `;
+    });
+    productGrid.querySelectorAll('.image-button').forEach(button => {
+      button.addEventListener('click', () => openImageModal(button.dataset.image, button.dataset.name));
+    });
+    productGrid.querySelectorAll('.edit-button').forEach(button => {
+      button.addEventListener('click', () => openEditModal(Number(button.dataset.productId)));
+    });
+    productGrid.querySelectorAll('.delete-button').forEach(button => {
+      button.addEventListener('click', () => deleteProduct(Number(button.dataset.productId)));
+    });
+  }
+
+  function openImageModal(imageUrl, name) {
+    zoomedImage.src = imageUrl;
+    zoomedImage.alt = name;
+    imageModal.classList.add('open');
+  }
+
+  function openEditModal(id) {
+    const product = allProducts.find(item => item.id === id);
+    if (!product) return;
+    document.getElementById('editId').value = product.id;
+    document.getElementById('editName').value = product.name;
+    document.getElementById('editBrand').value = product.brand;
+    document.getElementById('editPackSize').value = product.pack_size;
+    document.getElementById('editPrice').value = product.price;
+    editCategory.value = product.category_name || '';
+    document.getElementById('editImage').value = '';
+    editModal.classList.add('open');
+  }
+
+  async function deleteProduct(id) {
+    const product = allProducts.find(item => item.id === id);
+    if (!product || !confirm(`Delete "${product.name}"?`)) return;
+    const response = await fetch(`/api/products/${id}`, { method: 'DELETE' });
+    const data = await response.json();
+    if (!response.ok) {
+      alert(data.error || 'Could not delete product.');
+      return;
+    }
+    await loadProducts();
+  }
+
+  document.querySelectorAll('[data-close-modal]').forEach(button => {
+    button.addEventListener('click', () => document.getElementById(button.dataset.closeModal).classList.remove('open'));
+  });
+  [editModal, imageModal].forEach(modal => {
+    modal.addEventListener('click', event => {
+      if (event.target === modal) modal.classList.remove('open');
+    });
+  });
+
+  editForm.addEventListener('submit', async event => {
+    event.preventDefault();
+    const formData = new FormData();
+    formData.append('name', document.getElementById('editName').value.trim());
+    formData.append('brand', document.getElementById('editBrand').value.trim());
+    formData.append('pack_size', document.getElementById('editPackSize').value.trim());
+    formData.append('price', document.getElementById('editPrice').value);
+    formData.append('category_name', editCategory.value);
+    const image = document.getElementById('editImage').files[0];
+    if (image) formData.append('image', image);
+    const response = await fetch(`/api/products/${document.getElementById('editId').value}`, {
+      method: 'PUT',
+      body: formData,
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      alert(data.details || data.error || 'Could not update product.');
+      return;
+    }
+    editModal.classList.remove('open');
+    await loadCategories();
+    await loadProducts();
+  });
+
+  // Handle Submit
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    submitBtn.disabled = true;
+    submitBtn.innerText = 'Uploading to AWS S3 & Saving...';
+
+    const formData = new FormData(form);
+    if (categorySelect.value === '__new__') {
+      const categoryName = newCategory.value.trim();
+      if (!categoryName) {
+        alert('Please enter a category name.');
+        submitBtn.disabled = false;
+        submitBtn.innerText = 'Save product';
+        return;
+      }
+      formData.set('category_name', categoryName);
+    }
+
+    try {
+      const response = await fetch('/api/products', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.details || data.error);
+
+      form.reset();
+      newCategory.style.display = 'none';
+      newCategory.required = false;
+      await loadCategories();
+      await loadProducts(); // Reloads product grid instantly
+      alert('Success! Image uploaded to S3 and stored in Database!');
+    } catch (err) {
+      alert('Error: ' + err.message);
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.innerText = 'Save product';
+    }
+  });
+
+  loadCategories()
+    .then(loadProducts)
+    .catch(err => alert(err.message));
+</script>
+
+</body>
+</html>
